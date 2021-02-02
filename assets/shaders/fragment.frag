@@ -18,16 +18,23 @@ uniform vec2 resolution;
 
 uniform vec3 cameraPosition;
 uniform vec3 cameraLookAt;
+uniform vec3 cameraDestination;
+uniform float cameraSpeed;
 uniform float cameraFov;
 
 uniform float RAY_MAX_STEPS;
-uniform float RAY_THRESHOLD;
+uniform float RAY_MIN_THRESHOLD;
+uniform float RAY_MAX_THRESHOLD;
+uniform float RAY_MAX_THRESHOLD_DISTANCE;
 uniform float RAY_MAX_DISTANCE;
 
 uniform vec3 lightPosition;
 
 uniform vec3 fogColor;
 uniform float fogIntensity;
+
+uniform vec3 fractalParameters;
+uniform float fractalLimit;
 
 struct vec2Tuple {
     vec2 first;
@@ -65,9 +72,10 @@ struct specularOptions {
 
 struct shadowOptions {
     bool enabled;
-    float hardness;
     float lowerLimit;
     float upperLimit;
+    float limit;
+    float hardness;
 };
 
 struct aoOptions {
@@ -117,31 +125,67 @@ struct hit {
 //               https://github.com/stegu/webgl-noise
 // 
 
-float rand(vec2 co){
+float rand(vec2 co)
+{
     return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
 
-float hash(vec2 p) {
+float hash(vec2 p)
+{
      return fract(sin(1.0 + dot(p, vec2(127.1, 311.7))) * 43758.545);
 }
 
-vec3 mod289(vec3 x) {
+vec3 mod289(vec3 x)
+{
   return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
 
-vec4 mod289(vec4 x) {
+vec4 mod289(vec4 x)
+{
   return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
 
-vec4 permute(vec4 x) {
+vec4 permute(vec4 x)
+{
      return mod289(((x*34.0)+1.0)*x);
 }
 
-vec4 taylorInvSqrt(vec4 r) {
+vec4 taylorInvSqrt(vec4 r)
+{
   return 1.79284291400159 - 0.85373472095314 * r;
 }
 
-float snoise(vec3 v) { 
+float noise2D(in vec2 st) {
+    vec2 i = floor(st);
+    vec2 f = fract(st);
+
+    // Four corners in 2D of a tile
+    float a = rand(i);
+    float b = rand(i + vec2(1.0, 0.0));
+    float c = rand(i + vec2(0.0, 1.0));
+    float d = rand(i + vec2(1.0, 1.0));
+
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    return mix(a, b, u.x) +
+            (c - a)* u.y * (1.0 - u.x) +
+            (d - b) * u.x * u.y;
+}
+
+float fbm2D(vec2 point, float amplitude, float gain, float lacunarity, int octaves)
+{
+    float value = 0.0;
+    vec2 p1 = point;
+    for (int i = 0; i < octaves; i++) {
+        value += amplitude * noise2D(p1);
+        p1 *= lacunarity;
+        amplitude *= gain;
+    }
+    return value;
+}
+
+float snoise(vec3 v)
+{ 
     const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
     const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
 
@@ -230,6 +274,11 @@ float fbm3D(vec3 P, float frequency, float lacunarity, int octaves, float additi
         frequency1 *= lacunarity;
     }
     return t / amplitudeSum;
+}
+
+float map(float value, float inMin, float inMax, float outMin, float outMax)
+{
+    return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
 }
 
 //Source http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
@@ -422,13 +471,24 @@ float sdOctahedron(vec3 p, float s)
     if(3.0 * p.x < m ) q = p.xyz;
     else if(3.0 * p.y < m ) q = p.yzx;
     else if(3.0 * p.z < m ) q = p.zxy;
-    else return m*0.57735027;
+    else return m * 0.57735027;
 
     float k = clamp(0.5 * (q.z - q.y + s), 0.0, s); 
     return length(vec3(q.x, q.y - s + k, q.z - k)); 
 }
 
-float sdMandlebulb(vec3 p, vec3 pos, float pwr, float dis, float bail, int it) {
+float sdBoundingBox(vec3 p, vec3 b, float e, float r)
+{
+    p = abs(p) - b;
+    vec3 q = abs(p + e) - e;
+    return min(min(
+        length(max(vec3(p.x, q.y, q.z), 0.0)) + min(max(p.x, max(q.y, q.z)), 0.0),
+        length(max(vec3(q.x, p.y, q.z), 0.0)) + min(max(q.x, max(p.y, q.z)), 0.0)),
+        length(max(vec3(q.x, q.y, p.z), 0.0)) + min(max(q.x, max(q.y, p.z)), 0.0)) -r;
+}
+
+float sdMandlebulb(vec3 p, vec3 pos, float pwr, float dis, float bail, int it)
+{
     vec3 z = p + pos;
  
     float dr = 1.0;
@@ -441,12 +501,12 @@ float sdMandlebulb(vec3 p, vec3 pos, float pwr, float dis, float bail, int it) {
         // convert to polar coordinates
         float theta = acos(z.z/r);
         float phi = atan(z.y,z.x);
-        dr =  pow(r, power - 1.0) * power * dr + 1.0;
+        dr = pow(r, power - 1.0) * power * dr + 1.0;
         
         // scale and rotate the point
         float zr = pow(r, power);
-        theta = theta*power;
-        phi = phi*power;
+        theta = theta * power;
+        phi = phi * power;
         
         // convert back to cartesian coordinates
         z = zr * vec3(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta));
@@ -800,6 +860,16 @@ entity mOctahedron(vec3 path, float height, float scale, material material)
     return m;
 }
 
+entity mBoundingBox(vec3 path, vec3 b, float e, float r, float scale, material material)
+{
+    entity m;
+    vec3 p1 = path / scale;
+    m.dist = sdBoundingBox(p1, b, e, r) * scale;
+    m.point = p1;
+    m.material = material;
+    return m;
+}
+
 entity mGyroid(vec3 path, float scale, float thickness, float bias, material material)
 {
     entity m;
@@ -832,7 +902,37 @@ entity mJulian(vec3 path, vec4 c, float scale, material material)
     return m;
 }
 
-entity mFractal(vec3 path, int iter, material material) {
+entity mGrid(vec3 path, int iter, material material)
+{
+    vec3 p1 = path;
+    for(int i = 1; i <= iter; i++) {
+        p1 = rotY(p1, 0.25);
+        p1 = boxFold(p1, vec3(7.0, 0.0, 7.0));
+    }
+     //Huom tässä voi olla joku monimutkaisempikin muoto
+    entity box1 = mBox(
+        p1, 
+        vec3(15.0, 1.0, 1.0),
+        0.2,
+        1.0,
+        material
+    );
+    
+    entity box2 = mBox(
+        p1,
+        vec3(1.0, 1.0, 15.0),
+        0.2,
+        1.0,
+        material
+    );
+    entity cross = opUnion(box1, box2);
+    //Mielenkiintoinen ilmiö
+    cross.dist += sin(path.z * 0.05) * 3.0;
+    return cross;
+}
+
+entity mFractal(vec3 path, int iter, material material)
+{
     vec3 p1 = path;
     //Skaalaus voisi olla tarpeen tässäkin
     /*
@@ -848,8 +948,7 @@ entity mFractal(vec3 path, int iter, material material) {
 	float r = length(z);
 	return r/abs(dr);
     */
-   
-    iter = 3;
+
     for(int i = 1; i <= iter; i++) {
         //p1 = rotX(p1, 0.25);
         //p1 = rotY(p1, 0.05);
@@ -868,44 +967,37 @@ entity mFractal(vec3 path, int iter, material material) {
 
         p1 = rotX(p1, PI * 0.25);
         p1 = rotY(p1, PI * 0.2);
-         p1 = rotZ(p1, PI * 0.1);
+        p1 = rotZ(p1, PI * 0.1);
         p1 = translate(p1, vec3(0.0, .0, 0.0));
         
        
    
     }
      //Huom tässä voi olla joku monimutkaisempikin muoto
-    entity m = mBox(
-        p1, 
-        vec3(5.0, 1.0, 1.0),
-        0.1,
-        1.0,
-        material
-    );
-    
     entity box = mBox(
-        path,
-        vec3(8.0),
+        p1, 
+        vec3(1.0, 1.0, 1.0),
         0.0,
         1.0,
         material
     );
-    entity comp = opIntersection(box, m);
-    //comp.dist += sin(path.z * 0.1) * 3.0;
-    return m;
+    return box;
 }
 
-entity mRealFractal(vec3 point, vec3 size, int iter, float scale, material material) {
+entity mRealFractal(vec3 point, vec3 size, int iter, float scale, material material)
+{
     vec3 p = point.xzy * scale;
 	for(int i = 0; i < iter; i++)
 	{
 		p = 2.0 * clamp(p, -size, size) - p;
 		float r1 = dot(p, p);
-        float r2 = dot(p, p + sin(p.z * .1)); //Alternate fractal
-		float r = r2;
-        float k = max((2.0 / r), .027);
+        float r2 = dot(p, p - sin(p.x * 0.4)); //Alternate fractal
+		float r = r1;
+        float k = max((2.0 / r2), fractalLimit / 100.0);
 		p *= k;
 		scale *= k;
+        p = rotX(p,  -0.1);
+        //p = rotY(p, 6.22);
 	}
 
 	float l = length(p.xy);
@@ -916,16 +1008,27 @@ entity mRealFractal(vec3 point, vec3 size, int iter, float scale, material mater
 	return e;
 }
 
-entity mHexagonFloor(vec3 path)
+entity mCross(vec3 point, vec3 size, float r, float s, float scale, material material) 
 {
-    material m1 = material(
+    vec3 p1 = point / scale;
+    float box1 = sdBox(p1, vec3(size.x, 1.0, 1.0), r);
+    float box2 = sdBox(p1, vec3(1.0, size.y, 1.0), r);
+    float box3 = sdBox(p1, vec3(1.0, 1.0, size.z), r);
+    float l = opSmoothUnion(box1, opSmoothUnion(box2, box3, s), s) * scale;
+    entity e = mCustom(p1, l, material);
+    return e;
+}
+
+entity mTerrain(vec3 point) 
+{    
+    material mat = material(
         ambientOptions(
-            vec3(0.2, 0.5, 0.5),
-            0.5
+            vec3(219.0 /255.0, 65.0 / 255.0, 13.0 / 255.),
+            1.0
         ),
         diffuseOptions(
-            vec3(0.5, 0.5, 0.5),
-            0.1
+            vec3(1.0, 0.0, 0.0),
+            1.0
         ),
         specularOptions(
             vec3(1.0, 1.0, 1.0),
@@ -934,14 +1037,15 @@ entity mHexagonFloor(vec3 path)
         ),
         shadowOptions(
             false,
-            0.4,
             0.5,
-            10.0
+            1.0,
+            0.001,
+            12.0
         ),
         aoOptions(
             false,
-            0.3,
-            15.0
+            1.5,
+            1.0
         ),
         textureOptions(
             0,
@@ -951,54 +1055,58 @@ entity mHexagonFloor(vec3 path)
             false
         )
     );
-    vec3 size = vec3(2.5, 2.5, 0.0);
-    vec3Tuple r = repeat(path, size);
-    vec3 pos = r.first;
-    if(mod(r.second.y, 2) == 0)
-    {
-        pos = translate(pos, vec3(0.00, 0.0, 0.00));
-    }
-    else {
-        pos = translate(pos, vec3(0.0, 0.0, 0.0));
-    }
-    entity rh = mHexagon(
-        pos,
-        vec2(1.0, 1.0),
-        0.0,
-        1.0,
-        m1
+    vec3 p1 = point;
+
+    float fbm = fbm2D(
+        p1.xz * 0.01,
+        80.0,
+        0.35,
+        2.5,
+        5
     );
-    rh.dist *= 0.5;
-    return rh;
+
+    //float fbm2D (
+    //    in vec2 st,
+    //    float amplitude,
+    //    float gain,
+    //    float lacunarity,
+    //    int octaves
+    //    )
+
+    p1.y += fbm * 1.0;
+    //float fbm3D(vec3 P, float frequency, float lacunarity, int octaves, float addition)
+    float dist = sdPlane(p1, vec3(0.0, 1.0, 0.0), 1.0);
+    entity e = mCustom(p1, dist, mat);
+    return e;
 }
 
-entity mHoleSphere(vec3 path, float scale)
-{
-    path /= scale;
-    material m1 = material(
+entity mPyramids(vec3 point) 
+{    
+    material mat = material(
         ambientOptions(
-            vec3(0.2, 0.5, 0.2),
-            0.5
+            vec3(241.0 / 255.0, 242.0 / 255.0, 227.0 / 255.),
+            1.0
         ),
         diffuseOptions(
-            vec3(0.2, 0.5, 0.2),
-            0.34
+            vec3(1.0, 0.0, 0.0),
+            0.0
         ),
         specularOptions(
             vec3(1.0, 1.0, 1.0),
-            10.0,
-            15.0
+            0.0,
+            0.0
         ),
         shadowOptions(
             false,
-            0.4,
             0.5,
-            10.0
+            1.0,
+            0.001,
+            12.0
         ),
         aoOptions(
-            true,
-            0.3,
-            15.0
+            false,
+            1.5,
+            1.0
         ),
         textureOptions(
             0,
@@ -1008,106 +1116,335 @@ entity mHoleSphere(vec3 path, float scale)
             false
         )
     );
-
-    vec2 hSize = vec2(1.0, 5.0);
-    float hSmooth = 0.0;
-    float h1 = sdHexagon(
-        path,
-        hSize,
-        hSmooth
+    vec3 p1 = point;
+    float fbm = fbm3D(
+        p1 * 5.0,
+        0.2,
+        2.0,
+        3,
+        1.2
     );
-
-    float h2 = sdHexagon(
-        rotY(path, PI * 0.5),
-        hSize,
-        hSmooth
+    //float fbm3D(
+    //    vec3 P,
+    //    float frequency,
+    //    float lacunarity,
+    //    int octaves,
+    //    float addition)
+    //p1 += fbm;
+    float dist = 0.1;
+    float height = 1.5;
+    float scale = 1.0;
+    entity pyramid1 = mPyramid(
+        translate(p1, vec3(0.0, dist, 0.0)),
+        height,
+        scale,
+        mat
     );
+    pyramid1.needNormals = true;
 
-    float h3 = sdHexagon(
-        rotY(path, PI * 0.25),
-        hSize,
-        hSmooth
+    entity pyramid2 = mPyramid(
+        rotX(translate(p1, vec3(0.0, -dist, 0.0)), PI),
+        height,
+        scale,
+        mat
     );
+    pyramid2.needNormals = true;
 
-    float h4 = sdHexagon(
-        rotY(path, PI * 0.75),
-        hSize,
-        hSmooth
-    );
-
-    float h5 = sdHexagon(
-        rotX(path, PI * 0.5),
-        hSize,
-        hSmooth
-    );
-
-    float h6 = sdHexagon(
-        rotX(path, PI * 0.25),
-        hSize,
-        hSmooth
-    );
-
-    float h7 = sdHexagon(
-        rotX(path, PI * 0.75),
-        hSize,
-        hSmooth
-    );
-
-    float h8 = sdHexagon(
-        rotY(rotZ(path, PI * 0.75), PI * 0.5),
-        hSize,
-        hSmooth
-    );
-
-    float h9 = sdHexagon(
-        rotY(rotZ(path, PI * 0.25), PI * 0.5),
-        hSize,
-        hSmooth
-    );
-
-    float hs = 
-        opSmoothUnion(h1,
-            opSmoothUnion(h2,
-                opSmoothUnion(h3, 
-                    opSmoothUnion(h4,
-                        opSmoothUnion(h5, 
-                            opSmoothUnion(h6,
-                                opSmoothUnion(h7,
-                                    opSmoothUnion(h8, h9)
-                                )
-                            )
-                        )
-                    )
-                )
-            )
-        );
+    entity e = opUnion(pyramid1, pyramid2);
     
-    float s1 = sdSphere(
-        path,
-        4.0
+    return e;
+}
+
+entity mDebug(vec3 point, vec3 cDestination, vec3 cLookAt, vec3 lPosition, float size)
+{
+    material cm = material(
+        ambientOptions(
+            vec3(1.0, 0.0, 0.0),
+            1.5
+        ),
+        diffuseOptions(
+            vec3(1.0, 0.0, 0.0),
+            1.0
+        ),
+        specularOptions(
+            vec3(1.0, 1.0, 1.0),
+            0.0,
+            0.0
+        ),
+        shadowOptions(
+            false,
+            0.0,
+            0.0,
+            0.001,
+            0.0
+        ),
+        aoOptions(
+            false,
+            0.0,
+            0.0
+        ),
+        textureOptions(
+            0,
+            vec3(1.0, 1.0, 1.0),
+            vec3(0.0, 0.0, 0.0),
+            vec3(5.0, 5.0, 5.0),
+            false
+        )
+    );
+ 
+    entity ce;
+    vec3 centerPoint = point;
+    ce.dist = sdSphere(centerPoint, size);
+    ce.point = centerPoint;
+    ce.material = cm;
+    ce.needNormals = true;
+
+    material ctm = material(
+        ambientOptions(
+            vec3(0.0, 1.0, 0.0),
+            1.5
+        ),
+        diffuseOptions(
+            vec3(0.0, 1.0, 0.0),
+            1.0
+        ),
+        specularOptions(
+            vec3(1.0, 1.0, 1.0),
+            0.0,
+            0.0
+        ),
+        shadowOptions(
+            false,
+            0.0,
+            0.0,
+            0.001,
+            0.0
+        ),
+        aoOptions(
+            false,
+            0.0,
+            0.0
+        ),
+        textureOptions(
+            0,
+            vec3(1.0, 1.0, 1.0),
+            vec3(0.0, 0.0, 0.0),
+            vec3(5.0, 5.0, 5.0),
+            false
+        )
+    );
+ 
+    entity cte;
+    vec3 cameraDestinationPoint = translate(point, cDestination);
+    cte.dist = sdSphere(cameraDestinationPoint, size);
+    cte.point = cameraDestinationPoint;
+    cte.material = ctm;
+    cte.needNormals = true;
+
+    material clam = material(
+        ambientOptions(
+            vec3(0.0, 0.0, 1.0),
+            1.5
+        ),
+        diffuseOptions(
+            vec3(0.0, 0.0, 1.0),
+            1.0
+        ),
+        specularOptions(
+            vec3(1.0, 1.0, 1.0),
+            0.0,
+            0.0
+        ),
+        shadowOptions(
+            false,
+            0.0,
+            0.0,
+            0.001,
+            0.0
+        ),
+        aoOptions(
+            false,
+            0.0,
+            0.0
+        ),
+        textureOptions(
+            0,
+            vec3(1.0, 1.0, 1.0),
+            vec3(0.0, 0.0, 0.0),
+            vec3(5.0, 5.0, 5.0),
+            false
+        )
+    );
+ 
+    entity clae;
+    vec3 cameraLookAtPoint = translate(point, cLookAt);
+    clae.dist = sdSphere(cameraLookAtPoint, size);
+    clae.point = cameraLookAtPoint;
+    clae.material = clam;
+    clae.needNormals = true;
+
+    material lm = material(
+        ambientOptions(
+            vec3(1.0, 1.0, 1.0),
+            10.0
+        ),
+        diffuseOptions(
+            vec3(1.0, 1.0, 1.0),
+            1.0
+        ),
+        specularOptions(
+            vec3(1.0, 1.0, 1.0),
+            0.0,
+            0.0
+        ),
+        shadowOptions(
+            false,
+            0.0,
+            0.0,
+            0.001,
+            0.0
+        ),
+        aoOptions(
+            false,
+            0.0,
+            0.0
+        ),
+        textureOptions(
+            0,
+            vec3(1.0, 1.0, 1.0),
+            vec3(0.0, 0.0, 0.0),
+            vec3(5.0, 5.0, 5.0),
+            false
+        )
+    );
+ 
+    entity le;
+    vec3 lightPoint = translate(point, lPosition);
+    le.dist = sdSphere(lightPoint, size);
+    le.point = lightPoint;
+    le.material = lm;
+    le.needNormals = false;
+    
+    return opUnion(le, opUnion(ce, opUnion(cte, clae)));
+}
+
+entity mVault(vec3 point)
+{
+    material mm1 = material(
+        ambientOptions(
+            vec3(0.00, 0.00, 0.0),
+            0.2
+        ),
+        diffuseOptions(
+            vec3(0.00, 0.00, 0.00),
+            2.5
+        ),
+        specularOptions(
+            //vec3(0.60 / 1.0, 0.06 / 1.0, 0.82 / 1.0),
+            vec3(0.5),
+            1.0,
+            10.0
+        ),
+        shadowOptions(
+            false,
+            0.5,
+            1.0,
+            0.001,
+            12.0
+        ),
+        aoOptions(
+            false,
+            0.1,
+            20.0
+        ),
+        textureOptions(
+            0,
+            vec3(1.0, 1.0, 1.0),
+            vec3(0.0, 0.0, 0.0),
+            vec3(5.0, 5.0, 5.0),
+            false
+        )
+    );
+    material mm2 = material(
+        ambientOptions(
+            vec3(0.60, 0.06, 0.82),
+            0.2
+        ),
+        diffuseOptions(
+            vec3(0.60 / 2.0, 0.06 / 2.0, 0.82 / 2.0),
+            2.5
+        ),
+        specularOptions(
+            //vec3(0.60 / 1.0, 0.06 / 1.0, 0.82 / 1.0),
+            vec3(0.5),
+            1.0,
+            10.0
+        ),
+        shadowOptions(
+            false,
+            0.5,
+            1.0,
+            0.001,
+            12.0
+        ),
+        aoOptions(
+            false,
+            0.1,
+            20.0
+        ),
+        textureOptions(
+            0,
+            vec3(1.0, 1.0, 1.0),
+            vec3(0.0, 0.0, 0.0),
+            vec3(5.0, 5.0, 5.0),
+            false
+        )
+    );
+    entity bounding = mBoundingBox(
+        point, vec3(4.5),
+        0.5,
+        0.15,
+        1.0,
+        mm1);
+
+    vec3 p1 = point;
+    for(int i = 1; i <= 3; i++) {
+        p1 = boxFold(p1, vec3(1.0, 1.0, 1.0));
+        p1 = rotX(p1, PI * 0.25);
+        p1 = rotY(p1, PI * 0.2);
+        p1 = rotZ(p1, PI * 0.1);
+    }
+
+    entity crosses = mCross(
+        p1, 
+        vec3(35.0, 35.0, 35.0),
+        0.0,
+        1.5,
+        0.2,
+        mm2
     );
 
-    float s2 = sdSphere(
-        path,
-        3.8
+    entity crossCut = mCross(
+        point, 
+        vec3(10.0),
+        0.0,
+        0.0,
+        3.5,
+        mm2
     );
-
-    float ss = opSmoothSubtraction(s2, s1, 0.0);
-    float completeDist = opSmoothSubtraction(hs, ss, 0.0);
-    entity complete = mCustom(
-        path,
-        completeDist * scale,
-        m1
-    );
-    complete.needNormals = true;
-
-    return complete;
+    //return crossCut;
+    //return crosses;
+    //return opIntersection(crosses, crossCut);
+    //return opUnion(crosses, bounding);  
+	return opUnion(opIntersection(crosses, crossCut), bounding);
 }
 
 entity scene(vec3 path, vec2 uv)
 {       
-    switch(int(act)) {
-        case 1: {
+    switch(int(act))
+    {
+        case 1:
+        {
             material mb1 = material(
                 ambientOptions(
                     vec3(0.2, 0.7, 0.5),
@@ -1126,7 +1463,8 @@ entity scene(vec3 path, vec2 uv)
                     true,
                     0.4,
                     0.5,
-                    10.0
+                    0.001,
+                    1.0
                 ),
                 aoOptions(
                     false,
@@ -1144,27 +1482,28 @@ entity scene(vec3 path, vec2 uv)
             material ms1 = material(
                 ambientOptions(
                     vec3(0.0, 0.3, 0.8),
-                    1.0
+                    2.0
                 ),
                 diffuseOptions(
                     vec3(0.5, 0.5, 0.5),
-                    0.0
+                    1.5
                 ),
                 specularOptions(
                     vec3(0.5, 0.5, 0.5),
-                    1.0,
-                    100.0
+                    0.0,
+                    0.0
                 ),
                 shadowOptions(
                     false,
                     0.5,
-                    0.10,
-                    0.10
+                    5.0,
+                    0.001,
+                    12.0
                 ),
                 aoOptions(
                     true,
-                    15.0,
-                    0.5
+                    1.5,
+                    1.0
                 ),
                 textureOptions(
                     0,
@@ -1176,21 +1515,26 @@ entity scene(vec3 path, vec2 uv)
             );
             
             //path.y += (sin(path.x * 1.4) * 0.7);
-            vec3 p1 = rotX(rotY(path, time / 3.0), time / 4.0);
-            //path.y *= (sin(path.x * 0.8) * 0.4);
-            float scale = .5;
+            
+            vec3 fractPath = path;
+            //fractPath.y += (sin(path.z * 0.6) * 1.0);
+            //fractPath.x += (sin(path.y * 0.6) * .1);
+            float scale = 1.0;
             entity fr = mRealFractal(
-                path / scale, 
-                vec3(1.45, 0.65, 1.22),
+                fractPath / scale, 
+                //preset 0.76, 1.65, 1.22
+                fractalParameters,
                 10,
                 1.0,
                 ms1
             );
             fr.dist *= scale;
             fr.needNormals = true;
-            return fr;
+            entity debug = mDebug(path, cameraDestination, cameraLookAt, lightPosition, 2.0);
+            return opUnion(fr, debug);
         }
-        case 2: { 
+        case 2:
+        { 
             material mm1 = material(
                 ambientOptions(
                     vec3(1.0, 1.0, 1.0),
@@ -1207,13 +1551,14 @@ entity scene(vec3 path, vec2 uv)
                 ),
                 shadowOptions(
                     false,
-                    0.1,
-                    10.0,
-                    0.0
+                    0.5,
+                    1.0,
+                    0.001,
+                    12.0
                 ),
                 aoOptions(
-                    false,
-                    0.1,
+                    true,
+                    1.5,
                     2.0
                 ),
                 textureOptions(
@@ -1226,7 +1571,7 @@ entity scene(vec3 path, vec2 uv)
             );
 
         
-            vec3 p1 = rotZ(rotX(path, time3), time3);
+            vec3 p1 = rotY(path, time2);
             //p1 = path;
             p1 = opTwist(p1, 0.07);
             p1.xz += sin(p1.yy * 0.45) * 2.5;
@@ -1250,45 +1595,17 @@ entity scene(vec3 path, vec2 uv)
                 vec4(1.2, 1.7, 1.3, 2.5)) - 
                 vec4(0.35, 0.0, 0.0, 0.0),
 
-                18.0,
+                25.0,
                 mm1
             );
             //julian.dist -= fbm1;
-            //julian.dist *= 0.2;
+            julian.dist *= 0.5;
             julian.needNormals = true;
-            return julian;
-
-            vec3 p2 = rotX(rotY(path, time2), time3);
-            float fbm2 = fbm3D(
-                p2.xyz,
-                0.4,
-                0.9,
-                1,
-                0.0
-            );
-            p2 += fbm2;
-
-            entity box = mBox(
-                p2,
-                vec3(1.0, 100.0, 1.0),
-                0.0, 
-                5.0,
-                mm1
-            );
-            box.dist += fbm1;
-            box.dist *= 0.5;
-            box.needNormals = true;
-
-
-            entity fr = mFractal(
-                rotY(p1, 1.0),
-                5,
-                mm1
-            );
-            fr.needNormals = true;
-            return julian;
+            entity debug = mDebug(path, cameraDestination, cameraLookAt, lightPosition, 2.0);
+            return opUnion(julian, debug);
         }
-        case 3: {            
+        case 3:
+        {            
             material mm1 = material(
                 ambientOptions(
                     vec3(0.60, 0.06, 0.82),
@@ -1304,16 +1621,17 @@ entity scene(vec3 path, vec2 uv)
                     1.0,
                     10.0
                 ),
-                shadowOptions(
+              shadowOptions(
                     false,
-                    0.1,
-                    0.2,
-                    2.0
+                    0.5,
+                    1.0,
+                    0.001,
+                    12.0
                 ),
                 aoOptions(
-                    true,
-                    0.3,
-                    5.0
+                    false,
+                    2.5,
+                    1.0
                 ),
                 textureOptions(
                     0,
@@ -1326,200 +1644,101 @@ entity scene(vec3 path, vec2 uv)
 
         
             vec3 p1 = rotZ(rotX(path, time5), time4);
-            p1 = opTwist(p1, 0.02);
-            p1.y += sin(p1.z * 0.5) * 1.5;
-                       
+            p1 = opTwist(p1, 0.005);
+            //p1.y += sin(p1.x * 0.15) * 2.0;
+            //p1.y += cos(p1.z * 0.10) * 2.2;
+            //float fbm3D(vec3 P, float frequency, float lacunarity, int octaves, float addition)
+         
             float fbm1 = fbm3D(
-                p1,
-                0.3,
-                2.1,
+                p1.xzz,
+                0.006,
+                0.0,
                 1,
                 0.0
             );
-            p1 += fbm1;
-
-            entity box = mBox(
+           
+            p1.y += fbm1 * 30.0;
+            entity grid = mGrid(
                 p1,
-                vec3(10.0, 10.0, 10.0),
-                0.0, 
-                1.0,
+                15,
                 mm1
             );
 
-            //box.dist *= 0.5;
-            box.needNormals = true;
-            entity sphere = mSphere(
-                p1,
-                30.0,
-                1.0,
-                mm1
-            );
-
-            sphere.dist *= 0.35;
-            sphere.needNormals = true;
-            return sphere;
+            grid.dist *= 0.50;
+            grid.needNormals = true;
+            return grid;
         }
-        case 4: { 
-            material mm1 = material(
-                ambientOptions(
-                    vec3(0.60, 0.06, 0.82),
-                    0.5
-                ),
-                diffuseOptions(
-                    vec3(0.60 / 2.0, 0.06 / 2.0, 0.82 / 2.0),
-                    2.5
-                ),
-                specularOptions(
-                    vec3(0.60 / 1.0, 0.06 / 1.0, 0.82 / 1.0),
-                    //vec3(0.5),
-                    20.0,
-                    5.0
-                ),
-                shadowOptions(
-                    false,
-                    0.2,
-                    1.9,
-                    2.0
-                ),
-                aoOptions(
-                    false,
-                    0.3,
-                    5.0
-                ),
-                textureOptions(
-                    0,
-                    vec3(1.0, 1.0, 1.0),
-                    vec3(0.0, 0.0, 0.0),
-                    vec3(5.0, 5.0, 5.0),
-                    false
-                )
+        case 4:
+        {            
+            vec3 p1 = rotY(rotX(path, time), time2);
+            entity vault = mVault(
+                p1
             );
- 
-            vec3 path1 = path;
-            float time1 = time / 2.0;
-            path1 = rotY(path1, cos(path1.y * .12 + time1) * sin(path1.y * .025 + time1) * 2.0);
-            float disp2 = cos((path1.y * 0.23) + (time1 * 3.6));
-            float disp1 = sin((path1.y * 0.1) + (time1 * 5.0));
-            path1 = translate(path1, vec3(disp1 * disp2 * 3.0, 0.0, 0.0));
-            entity box1 = mBox(
-                path1,
-                vec3(1.0, 100.0, 1.0),
-                0.2, 
-                3.0,
-                mm1
-            );
-    
-            //box1.dist *= 0.5;
-            box1.needNormals = true;
 
-            vec3 p2 = rotX(path1, cos(path1.x * .17 + time) * sin(path1.x * .23 + time));
-            entity box2 = mBox(
-                p2,
-                vec3(100.0, 1.0, 1.0),
-                0.2, 
-                3.0,
-                mm1
-            );
-    
-            box1.dist *= 0.5;
-            box2.needNormals = true;
-            return box1;
-            return opSmoothUnion(box1, box2, 2.5, 0.5);
+           
+            vault.needNormals = true;
+            return vault;
         }
-        case 5: { 
-            material mm1 = material(
-                ambientOptions(
-                    vec3(0.60, 0.06, 0.82),
-                    0.5
-                ),
-                diffuseOptions(
-                    vec3(0.60 / 2.0, 0.06 / 2.0, 0.82 / 2.0),
-                    2.5
-                ),
-                specularOptions(
-                    vec3(0.60 / 1.0, 0.06 / 1.0, 0.82 / 1.0),
-                    //vec3(0.5),
-                    20.0,
-                    5.0
-                ),
-                shadowOptions(
-                    false,
-                    0.2,
-                    1.9,
-                    2.0
-                ),
-                aoOptions(
-                    false,
-                    0.3,
-                    5.0
-                ),
-                textureOptions(
-                    0,
-                    vec3(1.0, 1.0, 1.0),
-                    vec3(0.0, 0.0, 0.0),
-                    vec3(5.0, 5.0, 5.0),
-                    false
-                )
+        case 5:
+        {            
+            entity terrain = mTerrain(
+                path
             );
 
-            vec3Tuple pathTuple = repeatLimit(path, 1.25, vec3(50.0, 50.0, 50.0));
-            entity boxes = mBox(
-                pathTuple.first,
-                vec3(1.0, 1.0, 1.0),
-                0.1, 
-                0.50,
-                mm1
-            );
-    
-            //boxes.dist *= 0.5;
-            boxes.needNormals = true;
+            terrain.dist *= 0.5;
+            terrain.needNormals = true;
 
-            vec3 path1 = rotX(rotY(rotZ(path, time4), time3), time2);
-            entity julian = mJulian(
-                path1,
-                //0.45 * cos(vec4(0.5, 3.9, 1.4, 1.1) + time2 * vec4(1.2, 1.7, 1.3, 2.5)) - vec4(0.3, 0.0, 0.0, 0.0),
-                0.36 *
-                cos(vec4(0.9, 3.9, 1.4, 1.1) +
-                14 * 2200 *
-                //time2 * 
-                vec4(1.2, 1.7, 1.3, 2.5)) - 
-                vec4(0.35, 0.0, 0.0, 0.0),
-
-                18.0,
-                mm1
+            entity pyramids = mPyramids(
+                rotY(rotZ(rotX(path, PI * -0.05), PI * 0.1), time2)
             );
-   
-            //julian.dist *= 0.5;
-            julian.needNormals = true;
-            
-            return opIntersection(boxes, julian);    
+            return pyramids;
         }
     }
 } 
+
+entity scene(vec3 path)
+{
+    return scene(path, vec2(0));
+}
+
+vec3 pointNormals2(vec3 point, float threshold)
+{
+    vec2 eps = vec2(threshold, 0.0);
+    float dist = 2.0;//Tämä on viimeisein distance
+    return normalize(dist - vec3(
+        scene(point - eps.xyy).dist,
+        scene(point - eps.yxy).dist,
+        scene(point - eps.yyx).dist
+    ));
+}
+
+vec3 calculatePointNormals(vec3 point, float threshold)
+{
+    const vec2 k = vec2(1,-1);
+    return normalize(
+        k.xyy * scene(point + k.xyy * threshold, vec2(0)).dist + 
+        k.yyx * scene(point + k.yyx * threshold, vec2(0)).dist + 
+        k.yxy * scene(point + k.yxy * threshold, vec2(0)).dist + 
+        k.xxx * scene(point + k.xxx * threshold, vec2(0)).dist
+    );
+}
 
 hit raymarch(vec3 rayOrigin, vec3 rayDirection, vec2 uv) {
     hit h;
     h.steps = 0.0;
     h.last = 100.0;
     for(float i = 0.0; i <= RAY_MAX_STEPS; i++) {
-        h.point = rayOrigin + rayDirection * h.dist * 1.0;
+        h.point = rayOrigin + rayDirection * h.dist;
         h.entity = scene(h.point, uv);
         h.steps += 1.0;
-        //ABS?
-        h.entity.dist = h.entity.dist;
         h.last = min(h.entity.dist, h.last);
         h.dist += h.entity.dist;
-        if(h.entity.dist < RAY_THRESHOLD) {
-            if(h.entity.needNormals == true) {
-                vec2 eps = vec2(0.01, 0.0);
-                h.normal = normalize(h.entity.dist - vec3(
-                    scene(h.point - eps.xyy, uv).dist,
-                    scene(h.point - eps.yxy, uv).dist,
-                    scene(h.point - eps.yyx, uv).dist
-                ));
+        float threshold = map(h.dist, 0.0, RAY_MAX_THRESHOLD_DISTANCE, RAY_MIN_THRESHOLD, RAY_MAX_THRESHOLD);
+        if(h.entity.dist < threshold) {
+            if(h.entity.needNormals == true) {                
+                h.normal = calculatePointNormals(h.point, threshold);
             }
             break;
-
         }
         if(h.dist > RAY_MAX_DISTANCE) {
             break;
@@ -1527,25 +1746,6 @@ hit raymarch(vec3 rayOrigin, vec3 rayDirection, vec2 uv) {
     }
     
     return h;
-}
-
-float shadows(vec3 ro, vec3 lp, float mint, float maxt, float k) {
-    float res = 1.0;
-    float ph = 1e20;
-    vec3 rd = normalize(ro - lp);
-    for(float t = mint; t < maxt;)
-    {
-        float h = scene(ro + (rd * t), vec2(0)).dist;
-        if(abs(h) < 0.001)
-            return 0.0;
-        float y = h * h / (2.0 * ph);
-        float d = sqrt(h * h - y * y);
-        res = min(res, k * d / max(0.0, t - y));
-  
-        ph = h;
-        t += h;    
-    }
-    return res;
 }
 
 vec4 textureCube(sampler2D sam, in vec3 p, in vec3 n)
@@ -1557,7 +1757,8 @@ vec4 textureCube(sampler2D sam, in vec3 p, in vec3 n)
 	return (x*a.x + y*a.y + z*a.z) / (a.x + a.y + a.z);
 }
 
-vec2 planarMapping(vec3 p) {
+vec2 planarMapping(vec3 p)
+{
     vec3 p1 = normalize(p);
     vec2 r = vec2(0.0);
     if(abs(p1.x) == 1.0) {
@@ -1572,15 +1773,18 @@ vec2 planarMapping(vec3 p) {
     return r;
 }
 
-vec2 cylindiricalMapping(vec3 p) {
+vec2 cylindiricalMapping(vec3 p)
+{
     return vec2(atan(p.y / p.x), p.z);
 }
 
-vec2 scaledMapping(vec2 t, vec2 o, vec2 s) {
+vec2 scaledMapping(vec2 t, vec2 o, vec2 s)
+{
     return -vec2((t.x / o.x) + s.x, (t.y / o.y) + s.y);
 }
 
-float noise(float v, float amplitude, float frequency, float time) {
+float noise(float v, float amplitude, float frequency, float time)
+{
     float r = sin(v * frequency);
     float t = 0.01*(-time*130.0);
     r += sin(v*frequency*2.1 + t)*4.5;
@@ -1592,14 +1796,67 @@ float noise(float v, float amplitude, float frequency, float time) {
     return r;
 }
 
+float star(vec2 uv, float flare)
+{
+	float d = length(uv);
+    float m = 0.05 / d;
+    
+    float rays = max(0.0, 1.0 - abs(uv.x * uv.y * 1000.0));
+    m += rays * flare;
+    float s = sin(PI / 4.0), c = cos(PI / 4.0);
+    uv *= mat2(c, -s, s, c);
+    rays = max(0.0, 1.0 - abs(uv.x * uv.y * 1000.0));
+    m += rays * 0.3 * flare;
+    
+    m *= smoothstep(1.0, 0.2, d);
+    return m;
+}
+
+vec3 starsBg(vec2 uv, vec3 eye, vec3 rayDirection)
+{
+    vec3 lookAtDir = (cameraLookAt - eye);
+    vec2 cameraOffset = vec2(lookAtDir.x, lookAtDir.y);
+    vec2 uv1 = (uv * 5.0);// - cameraOffset;
+    vec3 color = vec3(0.0);
+    vec2 gv = fract(uv1) - 0.5;
+    vec2 id = floor(uv1);
+    
+    for(int y = -1; y <= 1; y++) {
+    	for(int x = -1; x <= 1; x++) {
+            vec2 offs = vec2(x, y);
+            
+    		float n = hash(id + offs); 
+            float size = fract(n * 0.32);
+            vec2 position = gv - offs - vec2(n, fract(n * 386.0)) + 0.5;
+    		float star = star(position, smoothstep(0.9, 1.0, size) * 0.02);
+
+
+            color += star * size;
+        }
+    }
+    return color;
+}
+
 float plot(float pct, float thickness, vec2 position) {
     return smoothstep(pct - thickness, pct, position.x) - smoothstep(pct, pct + thickness, position.x);
 }
 
-vec3 background(vec2 uv) {
+vec3 sunsetBg(vec2 uv)
+{
 	vec3 r1 = mix(vec3(1.0, 1.0, 0.0), vec3(0.26, 0.80, 0.96), (uv.y + 1.0)) * plot(0.4, 1.5, uv.yx);
 	vec3 r2 = mix(vec3(1.0, 0.0, 0.0), vec3(0.97, 0.65, 0.26), (uv.y + 1.0)) * plot(0.0, 1.5, uv.yx * 1.4);
 	return vec3(r1 + r2);
+}
+
+vec3 background(vec2 uv, vec3 eye, vec3 rayDirection)
+{
+    switch(int(act)) {
+        case 1:
+            return sunsetBg(uv);
+        case 5:
+            return starsBg(uv, eye, rayDirection);
+    }
+	return vec3(0.0);
 }
 
 vec3 hsv2rgb(vec3 c)
@@ -1609,14 +1866,16 @@ vec3 hsv2rgb(vec3 c)
     return c.z * mix( vec3(1.0), rgb, c.y);
 }
 
-vec3 rainbow(vec3 position) {
+vec3 rainbow(vec3 position)
+{
     float d = length(position);
 	//vec3 color = hsv2rgb(vec3(time * 0.005 * position.x ,0.25+sin(time+position.x)*0.5+0.5,d));
     vec3 color = hsv2rgb(vec3(time * 1.3 + position.z , 1.8, 1.4));
     return color;
 }
 
-vec3 dunno(vec3 position) {
+vec3 dunno(vec3 position)
+{
     float color = 0.0;
 	color += sin( position.x * cos( time / 15.0 ) * 80.0 ) + cos( position.y * cos( time / 15.0 ) * 10.0 );
 	color += sin( position.y * sin( time / 10.0 ) * 40.0 ) + cos( position.x * sin( time / 25.0 ) * 40.0 );
@@ -1625,17 +1884,20 @@ vec3 dunno(vec3 position) {
     return  vec3( color, color * 0.5, sin( color + time / 3.0 ) * 0.75 );
 }
 
-vec3 ambient(ambientOptions ambientOptions) {
+vec3 ambient(ambientOptions ambientOptions)
+{
     return ambientOptions.color * ambientOptions.strength;
 } 
 
-vec3 diffuse(vec3 normal, vec3 hit, vec3 lightDir, diffuseOptions diffuseOptions) {
+vec3 diffuse(vec3 normal, vec3 hit, vec3 lightDir, diffuseOptions diffuseOptions)
+{
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 diffuse = diff * diffuseOptions.color * diffuseOptions.strength;
     return diffuse;
 }
 
-vec3 specular(vec3 normal, vec3 eye, vec3 hit, vec3 lightDir, specularOptions specularOptions) {
+vec3 specular(vec3 normal, vec3 hit, vec3 lightDir, vec3 eye, specularOptions specularOptions)
+{
     vec3 viewDir = normalize(eye - hit);
     vec3 halfwayDir = normalize(lightDir + viewDir);
 
@@ -1644,17 +1906,19 @@ vec3 specular(vec3 normal, vec3 eye, vec3 hit, vec3 lightDir, specularOptions sp
     return specular;
 } 
 
-vec3 calculateLights(vec3 normal, vec3 eye, vec3 lightPos, vec3 origin, ambientOptions ambientOptions, diffuseOptions diffuseOptions, specularOptions specularOptions) {
-    vec3 lightDir = normalize(lightPos - origin);
+vec3 calculateLights(vec3 normal, vec3 eye, vec3 lightPos, vec3 hit, ambientOptions ambientOptions, diffuseOptions diffuseOptions, specularOptions specularOptions)
+{
+    vec3 lightDir = normalize(lightPos - hit);
     vec3 ambient = ambient(ambientOptions);
-    vec3 diffuse = diffuse(normal, origin, lightDir, diffuseOptions);
-    vec3 specular = specular(normal, eye, origin, lightDir, specularOptions);
+    vec3 diffuse = diffuse(normal, hit, lightDir, diffuseOptions);
+    vec3 specular = specular(normal, hit, lightDir, eye, specularOptions);
 
     vec3 lights = (ambient + diffuse + specular);
     return lights;
 }
 
-vec3 calculateShadows(vec3 origin, vec3 lightPos, shadowOptions shadowOptions) {
+vec3 calculateShadows(vec3 origin, vec3 lightPos, shadowOptions shadowOptions)
+{
     if(shadowOptions.enabled == false) {
         return vec3(1.0);
     }
@@ -1664,19 +1928,23 @@ vec3 calculateShadows(vec3 origin, vec3 lightPos, shadowOptions shadowOptions) {
     for(float t = shadowOptions.lowerLimit; t < shadowOptions.upperLimit;)
     {
         float h = scene(origin + (lightDir * t), vec2(0)).dist;
-        if(abs(h) < 0.001)
+        if(h < shadowOptions.limit)
             return vec3(0.0);
+            
         float y = h * h / (2.0 * ph);
         float d = sqrt(h * h - y * y);
         res = min(res, shadowOptions.hardness * d / max(0.0, t - y));
   
         ph = h;
         t += h;    
+        
+ 
     }
     return vec3(res);
 }
 
-vec3 ao(vec3 point, vec3 normal, aoOptions aoOptions) {
+vec3 ao(vec3 point, vec3 normal, aoOptions aoOptions)
+{
 	float aoOut = 1.0;
 	for (float i = 0.0; i < aoOptions.limit; i++) {
 		aoOut -= (i * aoOptions.factor - scene(point + normal * i * aoOptions.factor, vec2(0.0)).dist) / pow(2.0, i);
@@ -1684,11 +1952,13 @@ vec3 ao(vec3 point, vec3 normal, aoOptions aoOptions) {
 	return vec3(aoOut);
 }
 
-vec3 fog(vec3 original, vec3 color, float dist, float b) {
+vec3 fog(vec3 original, vec3 color, float dist, float b)
+{
     return mix(original, color, 1.0 - exp(-dist * b));
 }
 
-vec3 generateTexture(vec3 point, textureOptions textureOptions) {
+vec3 generateTexture(vec3 point, textureOptions textureOptions)
+{
     vec3 r = textureOptions.baseColor;
     if(textureOptions.index == 1) {
         return rainbow(point);
@@ -1699,7 +1969,8 @@ vec3 generateTexture(vec3 point, textureOptions textureOptions) {
     return r;
 }
 
-vec3 calculateNormal(in vec3 n, in entity e) {
+vec3 calculateNormal(in vec3 n, in entity e)
+{
     vec3 normal = n;
     if(e.material.texture.normalMap == true) {
         normal *= generateTexture(e.point, e.material.texture);
@@ -1707,36 +1978,36 @@ vec3 calculateNormal(in vec3 n, in entity e) {
     return normal;
 }
 
-vec3 determinePixelBaseColor(float steps, float dist, float last) {
+vec3 determinePixelBaseColor(float steps, float last, float dist)
+{
     float smoothedSteps = 1.0 - smoothstep(0.0, RAY_MAX_STEPS, steps);
-    float smoothedLast = smoothstep(0.0, RAY_THRESHOLD, last);
-    //Maybe use for highlight for deep ones?
-    float smoothedDist = 0.2 - smoothstep(0.0, RAY_MAX_DISTANCE, dist);
-    //vec3 base = vec3(steps / RAY_MAX_STEPS);
-    //vec3 base = vec3(0.1 - smoothstep(0.0, RAY_MAX_DISTANCE, dist));
+    float smoothedDist = 1.0 - smoothstep(0.0, RAY_MAX_DISTANCE, dist);
     return vec3(smoothedSteps);
+    //return vec3(smoothedDist);
 }
 
 vec3 processColor(hit h, vec3 rd, vec3 eye, vec2 uv, vec3 lp)
 { 
     if(h.dist > RAY_MAX_DISTANCE) {
-        return background(uv).rgb;
+        return background(uv, eye, rd);
     }
    
     material em = h.entity.material;
-    vec3 base = determinePixelBaseColor(h.steps, h.dist, h.last);
+    vec3 base = determinePixelBaseColor(h.steps, h.last, h.dist); 
     vec3 texture = generateTexture(h.point, em.texture);
  
-    texture = texture * base;
-    vec3 normal = calculateNormal(h.normal, h.entity);
-    vec3 lights = calculateLights(normal, eye, lp, h.point, em.ambient, em. diffuse, em.specular);
-    vec3 shadows = calculateShadows(h.point, lp, em.shadow);
-    vec3 result = (lights * texture) * shadows;
-    //result = base;
-    if(em.ao.enabled)
-    {
-        result *= ao(h.point, normal, em.ao);
-    }
+    vec3 result = texture = texture * base;
+    if (h.entity.needNormals == true) {
+        vec3 normal = calculateNormal(h.normal, h.entity);
+        vec3 lights = calculateLights(normal, eye, lp, h.point, em.ambient, em. diffuse, em.specular);
+        vec3 shadows = calculateShadows(h.point, lp, em.shadow);
+        result = lights * base * shadows;
+
+        if(em.ao.enabled)
+        {
+            result *= ao(h.point, normal, em.ao);
+        }
+    }      
     
     result = fog(result, fogColor, h.dist, fogIntensity);
     result = pow(result, vec3(1.0 / 1.2));
@@ -1745,19 +2016,23 @@ vec3 processColor(hit h, vec3 rd, vec3 eye, vec2 uv, vec3 lp)
 }
 
 vec3 drawMarching(vec2 uv) {
-    vec3 forward = normalize(cameraLookAt - cameraPosition);   
+    vec3 direction = normalize(cameraDestination - cameraPosition);
+    vec3 currentCameraPosition = cameraPosition;
+    currentCameraPosition += cameraSpeed * time * direction;
+
+    vec3 forward = normalize(cameraLookAt - currentCameraPosition);   
     vec3 right = normalize(vec3(forward.z, 0.0, -forward.x));
     vec3 up = normalize(cross(forward, right)); 
     
     vec3 rayDirection = normalize(forward + cameraFov * uv.x * right + cameraFov * uv.y * up);
-    hit tt = raymarch(cameraPosition, rayDirection, uv);
-    return processColor(tt, rayDirection, cameraPosition, uv, lightPosition); 
+    hit marchHit = raymarch(currentCameraPosition, rayDirection, uv);
+    return processColor(marchHit, rayDirection, currentCameraPosition, uv, lightPosition); 
 }
 
 void main() {
     float aspectRatio = resolution.x / resolution.y;
     vec2 uv = (gl_FragCoord.xy / resolution.xy) * 2.0 - 1.0;
     uv.x *= aspectRatio;
-    vec3 o = drawMarching(uv);
-    FragColor = vec4(o, 1.0);
+    vec3 marchResult = drawMarching(uv);
+    FragColor = vec4(marchResult * fade, 1.0);
 }
