@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rootElement>
+<tracks rows="10000" startRow="0" endRow="10000" rowsPerBeat="8"
+beatsPerMin="125">
+	<track name="common:act" folded="0" muteKeyCount="0"
+color="ffb27474">
+		<key row="0" value="1.000000" interpolation="0" />
+		<key row="192" value="10.000000" interpolation="0" />
+		<key row="448" value="11.000000" interpolation="0" />
+		<key row="832" value="2.000000" interpolation="0" />
+		<key row="1088" value="4.000000" interpolation="0" />
+		<key row="1472" value="5.000000" interpolation="0" />
+	</track>
+	<track name="common:fade.x" folded="0" muteKeyCount="0"
+color="ffb28050">
+		<key row="0" value="1.000000" interpolation="0" />
+		<key row="448" value="1.000000" interpolation="0" />
+		<key row="1064" value="0.000000" interpolation="0" />
+		<key row="1088" value="0.000000" interpolation="1" />
+		<key row="1096" value="1.000000" interpolation="0" />
+	</track>
+	<track name="common:fade.y" folded="0" muteKeyCount="0"
+color="ffa9b250">
+		<key row="0" value="1.000000" interpolation="0" />
+		<key row="448" value="1.000000" interpolation="0" />
+		<key row="1064" value="0.000000" interpolation="0" />
+		<key row="1088" value="0.000000" interpolation="1" />
+		<key row="1096" value="1.000000" interpolation="0" />
+	</track>
+	<track name="common:fade.z" folded="0" muteKeyCount="0"
+color="ff60b250">
+		<key row="0" value="1.000000" interpolation="0" />
+		<key row="448" value="1.000000" interpolation="0" />
+		<key row="1064" value="0.000000" interpolation="0" />
+		<key row="1088" value="0.000000" interpolation="1" />
+		<key row="1096" value="1.000000" interpolation="0" />
+	</track>
+	<track name="camera:position.x" folded="0" muteKeyCount="0"
+color="ff4fb292">
+		<key row="0" value="2.000000" interpolation="0" />
+		<key row="448" value="0.000000" interpolation="0" />
+		<key row="1088" value="0.000000" interpolation="0" />
+	</track>
+	<track name="camera:position.y" folded="0" muteKeyCount="0"
+color="ff4f71b2">
+		<key row="0" value="2.000000" interpolation="0" />
+		<key row="448" value="0.000000" interpolation="0" />
+		<key row="1088" value="0.000000" interpolation="0" />
+	</track>
+	<track name="camera:position.z" folded="0" muteKeyCount="0"
+color="ff8850b2">
+		<key row="0" value="5.499980" interpolation="0" />
+		<key row="448" value="-1.000000" interpolation="0" />
+		<key row="1088" value="3.000000" interpolation="0" />
+	</track>
+	<track name="camera:lookat.x" folded="0" muteKeyCount="0"
+color="ffb25091">
+		<key row="0" value="0.000000" interpolation="0" />
+		<key row="448" value="0.000000" interpolation="0" />
+		<key row="1088" value="0.000000" interpolation="0" />
+	</track>
+	<track name="camera:lookat.y" folded="0" muteKeyCount="0"
+color="ffb27474">
+		<key row="0" value="0.000000" interpolation="0" />
+		<key row="448" value="0.000000" interpolation="0" />
+		<key row="1088" value="0.000000" interpolation="0" />
+	</track>
+	<track name="camera:lookat.z" folded="0" muteKeyCount="0"
+color="ffb28050">
+		<key row="0" value="0.000000" interpolation="0" />
+		<key row="448" value="1.000000" interpolation="0" />
+		<key row="1088" value="1.000000" interpolation="0" />
+	</track>
+	<track name="camera:fov" folded="0" muteKeyCount="0"
+color="ffa9b250">
+		<key row="0" value="0.900000" interpolation="0" />
+		<key row="448" value="0.900000" interpolation="0" />
+		<key row="1088" value="0.900000" interpolation="0" />
+	</track>
+	<track name="march:maxsteps" folded="0" muteKeyCount="0"
+color="ff60b250">
+		<key row="0" value="64.000000" interpolation="0" />
+		<key row="448" value="64.000000" interpolation="0" />
+		<key row="1088" value="64.000000" interpolation="0" />
+	</track>
+	<track name="march:threshold" folded="0" muteKeyCount="0"
+color="ff4fb292">
+		<key row="0" value="0.001000" interpolation="0" />
+		<key row="448" value="0.001000" interpolation="0" />
+		<key row="1088" value="0.001000" interpolation="0" />
+	</track>
+	<track name="light:position.x" folded="0" muteKeyCount="0"
+color="ff4f71b2">
+		<key row="0" value="0.000000" interpolation="0" />
+		<key row="448" value="0.000000" interpolation="0" />
+		<key row="1088" value="0.000000" interpolation="0" />
+	</track>
+	<track name="light:position.y" folded="0" muteKeyCount="0"
+color="ff8850b2">
+		<key row="0" value="40.000000" interpolation="0" />
+		<key row="448" value="40.000000" interpolation="0" />
+		<key row="1088" value="15.000000" interpolation="0" />
+	</track>
+	<track name="light:position.z" folded="0" muteKeyCount="0"
+color="ffb25091">
+		<key row="0" value="0.000000" interpolation="0" />
+		<key row="448" value="0.000000" interpolation="0" />
+		<key row="1088" value="-3.000000" interpolation="0" />
+	</track>
+	<track name="fog:color.x" folded="0" muteKeyCount="0"
+color="ffb27474">
+		<key row="0" value="0.500000" interpolation="0" />
+		<key row="448" value="0.500000" interpolation="0" />
+		<key row="1088" value="0.500000" interpolation="0" />
+	</track>
+	<track name="fog:color.y" folded="0" muteKeyCount="0"
+color="ffb28050">
+		<key row="0" value="0.600000" interpolation="0" />
+		<key row="448" value="0.600000" interpolation="0" />
+		<key row="1088" value="0.600000" interpolation="0" />
+	</track>
+	<track name="fog:color.z" folded="0" muteKeyCount="0"
+color="ffa9b250">
+		<key row="0" value="0.700000" interpolation="0" />
+		<key row="448" value="0.700000" interpolation="0" />
+		<key row="1088" value="0.700000" interpolation="0" />
+	</track>
+	<track name="fog:intensity" folded="0" muteKeyCount="0"
+color="ff60b250">
+		<key row="0" value="0.001000" interpolation="0" />
+		<key row="448" value="0.001000" interpolation="0" />
+		<key row="1088" value="0.001000" interpolation="0" />
+	</track>
+	<track name="makers:position.x" folded="0" muteKeyCount="0"
+color="ff4fb292">
+		<key row="1088" value="0.200000" interpolation="0" />
+		<key row="1344" value="-0.200000" interpolation="0" />
+	</track>
+	<track name="makers:position.y" folded="0" muteKeyCount="0"
+color="ff4f71b2">
+		<key row="1088" value="0.400000" interpolation="0" />
+		<key row="1344" value="0.400000" interpolation="1" />
+		<key row="1400" value="10.000000" interpolation="0" />
+	</track>
+	<track name="makers:position.z" folded="0" muteKeyCount="0"
+color="ff8850b2">
+		<key row="1088" value="0.000000" interpolation="0" />
+		<key row="1344" value="0.000000" interpolation="1" />
+		<key row="1400" value="-10.000000" interpolation="0" />
+	</track>
+	<track name="makers:offset.x" folded="0" muteKeyCount="0"
+color="ffb25091">
+		<key row="1088" value="0.400000" interpolation="0" />
+		<key row="1280" value="0.500000" interpolation="0" />
+	</track>
+	<track name="makers:offset.y" folded="0" muteKeyCount="0"
+color="ffb27474">
+		<key row="1088" value="0.000000" interpolation="1" />
+		<key row="1472" value="10.000000" interpolation="0" />
+	</track>
+	<track name="makers:offset.z" folded="0" muteKeyCount="0"
+color="ffb28050">
+		<key row="1088" value="0.000000" interpolation="0" />
+		<key row="1280" value="0.700000" interpolation="0" />
+	</track>
+	<track name="makers:texture" folded="0" muteKeyCount="0"
+color="ffa9b250">
+		<key row="1088" value="44.000000" interpolation="0" />
+		<key row="1152" value="41.000000" interpolation="0" />
+		<key row="1216" value="43.000000" interpolation="0" />
+		<key row="1280" value="42.000000" interpolation="0" />
+	</track>
+	<track name="demoname:position.x" folded="0" muteKeyCount="0"
+color="ff60b250">
+		<key row="1088" value="-6.090000" interpolation="0" />
+	</track>
+	<track name="demoname:position.y" folded="0" muteKeyCount="0"
+color="ff4fb292">
+		<key row="1088" value="-0.000000" interpolation="0" />
+	</track>
+	<track name="demoname:position.z" folded="0" muteKeyCount="0"
+color="ff4f71b2">
+		<key row="1088" value="0.000000" interpolation="0" />
+	</track>
+	<track name="demoname:offset.x" folded="0" muteKeyCount="0"
+color="ff8850b2">
+		<key row="1088" value="-0.060000" interpolation="0" />
+	</track>
+	<track name="demoname:offset.y" folded="0" muteKeyCount="0"
+color="ffb25091">
+		<key row="1088" value="-0.100000" interpolation="0" />
+	</track>
+	<track name="demoname:offset.z" folded="0" muteKeyCount="0"
+color="ffb27474">
+		<key row="1088" value="-0.030000" interpolation="0" />
+	</track>
+</tracks>
+	</rootElement>

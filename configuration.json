@@ -1,0 +1,129 @@
+{
+    "demo": {
+        "name": "vortex party 2020",
+        "group": "tähtituho",
+        "release": false
+    },
+    "screen": {
+        "width": 1280,
+        "height": 960,
+        "FPS": 80
+    },
+    "music": {
+        "file": "assets\\music\\tune.mp3",
+        "BPM": 70.0,
+        "frequency": 44000
+    },
+    "sync": {
+        "RPB": 8,
+        "host": "localhost"
+    },
+    "shaders": {
+        "vertex": "assets\\shaders\\vertex.vert",
+        "fragment": "assets\\shaders\\fragment.frag",
+        "majorVersion": 3,
+        "minorVersion": 3,
+        "uniforms": [
+            {
+                "variable": "time",
+                "track": "time"
+            },
+            {
+                "variable": "resolution",
+                "track": "resolution"
+            },
+            {
+                "variable": "fade",
+                "track": "common:fade"
+            },
+            {
+                "variable": "act",
+                "track": "common:act"
+            },
+            {
+                "variable": "cameraPosition",
+                "track": "camera:position"
+            },
+            {
+                "variable": "cameraLookAt",
+                "track": "camera:lookat"
+            },
+            {
+                "variable": "cameraFov",
+                "track": "camera:fov"
+            },
+            {
+                "variable": "RAY_MAX_STEPS",
+                "track": "march:maxsteps"
+            },
+            {
+                "variable": "RAY_THRESHOLD",
+                "track": "march:threshold"
+            },
+            {
+                "variable": "RAY_MAX_DISTANCE",
+                "track": "march:maxdistance"
+            },
+            {
+                "variable": "lightPosition",
+                "track": "light:position"
+            },
+            {
+                "variable": "fogColor",
+                "track": "fog:color"
+            },
+            {
+                "variable": "fogIntensity",
+                "track": "fog:intensity"
+            }
+        ],
+        "textures": []
+    },
+    "assets": [],
+    "tracks": [
+        {
+            "type": "float1",
+            "track": "common:act"
+        },
+        {
+            "type": "float3",
+            "track": "common:fade"
+        },
+        {
+            "type": "float3",
+            "track": "camera:position"
+        },
+        {
+            "type": "float3",
+            "track": "camera:lookat"
+        },
+        {
+            "type": "float1",
+            "track": "camera:fov"
+        },
+        {
+            "type": "float1",
+            "track": "march:maxsteps"
+        },
+        {
+            "type": "float1",
+            "track": "march:threshold"
+        },
+        {
+            "type": "float1",
+            "track": "march:maxdistance"
+        },
+        {
+            "type": "float3",
+            "track": "light:position"
+        },
+        {
+            "type": "float3",
+            "track": "fog:color"
+        },
+        {
+            "type": "float1",
+            "track": "fog:intensity"
+        }
+    ]
+}
