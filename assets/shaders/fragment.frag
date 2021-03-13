@@ -16,10 +16,12 @@ float time4 = time / 4;
 float time5 = time / 5;
 uniform vec2 resolution;
 
-uniform vec3 cameraPosition;
+uniform vec3 cameraStartPosition;
 uniform vec3 cameraLookAt;
-uniform vec3 cameraDestination;
-uniform float cameraSpeed;
+uniform vec3 cameraEndPosition;
+uniform vec3 cameraControlPosition1;
+uniform vec3 cameraControlPosition2;
+uniform float cameraTime;
 uniform float cameraFov;
 
 uniform float RAY_MAX_STEPS;
@@ -279,7 +281,7 @@ float fbm3D(vec3 P, float frequency, float lacunarity, int octaves, float additi
 
 float map(float value, float inMin, float inMax, float outMin, float outMax)
 {
-    return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
+    return min(outMax, outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin));
 }
 
 //Source http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
@@ -1536,7 +1538,7 @@ entity scene(vec3 path, vec2 uv)
             );
             fr.dist *= scale;
             fr.needNormals = true;
-            entity debug = mDebug(path, cameraDestination, cameraLookAt, lightPosition, 2.0);
+            entity debug = mDebug(path, cameraEndPosition, cameraLookAt, lightPosition, 2.0);
             return opUnion(fr, debug);
         }
         case 2:
@@ -1607,7 +1609,7 @@ entity scene(vec3 path, vec2 uv)
             //julian.dist -= fbm1;
             julian.dist *= 0.5;
             julian.needNormals = true;
-            entity debug = mDebug(path, cameraDestination, cameraLookAt, lightPosition, 2.0);
+            entity debug = mDebug(path, cameraEndPosition, cameraLookAt, lightPosition, 2.0);
             return opUnion(julian, debug);
         }
         case 3:
@@ -2025,15 +2027,8 @@ vec3 processColor(hit h, vec3 rd, vec3 eye, vec2 uv, vec3 lp)
 }
 
 vec3 drawMarching(vec2 uv) {
-    vec3 direction = normalize(cameraDestination - cameraPosition);
-    vec3 currentCameraPosition = cameraPosition;
-    //currentCameraPosition += cameraSpeed * time * direction;
-    vec3 P0 = vec3(cameraPosition.x, cameraPosition.y, cameraPosition.z);
-    vec3 P1 = vec3(cameraPosition.x + 200, cameraPosition.y + 100, cameraPosition.z);
-    vec3 P2 = vec3(cameraDestination.x + 200, cameraDestination.y + 100, cameraDestination.z);
-    vec3 P3 = vec3(cameraDestination.x, cameraDestination.y, cameraDestination.z);
-    float bezierCurvePoint = fract(cameraSpeed);
-    currentCameraPosition = bezier(P0, P1, P2, P3, bezierCurvePoint);
+    float bezierCurvePoint = fract(cameraTime);
+    vec3 currentCameraPosition = bezier(cameraStartPosition, cameraControlPosition1, cameraControlPosition2, cameraEndPosition, bezierCurvePoint);
 
     vec3 forward = normalize(cameraLookAt - currentCameraPosition);   
     vec3 right = normalize(vec3(forward.z, 0.0, -forward.x));

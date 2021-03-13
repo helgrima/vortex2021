@@ -44,15 +44,29 @@
         {
             "type": "float3",
             "name": {
-                "variable": "cameraPosition",
-                "track": "camera:position"
+                "variable": "cameraStartPosition",
+                "track": "camera:startposition"
             }
         },
         {
             "type": "float3",
             "name": {
-                "variable": "cameraDestination",
-                "track": "camera:destination"
+                "variable": "cameraEndPosition",
+                "track": "camera:endposition"
+            }
+        },
+        {
+            "type": "float3",
+            "name": {
+                "variable": "cameraControlPosition1",
+                "track": "camera:cp1"
+            }
+        },
+        {
+            "type": "float3",
+            "name": {
+                "variable": "cameraControlPosition2",
+                "track": "camera:cp2"
             }
         },
         {
@@ -65,8 +79,8 @@
         {
             "type": "float1",
             "name": {
-                "variable": "cameraSpeed",
-                "track": "camera:speed"
+                "variable": "cameraTime",
+                "track": "camera:time"
             }
         },
         {

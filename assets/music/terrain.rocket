@@ -32,33 +32,33 @@ color="ff60b250">
 		<key row="34" value="1.000000" interpolation="0" />
 		<key row="43" value="1.000000" interpolation="0" />
 	</track>
-	<track name="camera:position.x" folded="0" muteKeyCount="0"
+	<track name="camera:startposition.x" folded="0" muteKeyCount="0"
 color="ff4fb292">
 		<key row="0" value="0.000000" interpolation="0" />
 		<key row="98" value="0.000000" interpolation="0" />
 	</track>
-	<track name="camera:position.y" folded="0" muteKeyCount="0"
+	<track name="camera:startposition.y" folded="0" muteKeyCount="0"
 color="ff4f71b2">
 		<key row="0" value="0.000000" interpolation="0" />
 		<key row="98" value="0.000000" interpolation="0" />
 	</track>
-	<track name="camera:position.z" folded="0" muteKeyCount="0"
+	<track name="camera:startposition.z" folded="0" muteKeyCount="0"
 color="ff8850b2">
 		<key row="0" value="0.000000" interpolation="0" />
 		<key row="98" value="1000.000000" interpolation="0" />
 	</track>
-	<track name="camera:destination.x" folded="0" muteKeyCount="0"
+	<track name="camera:endposition.x" folded="0" muteKeyCount="0"
 color="ffa9b250">
 		<key row="0" value="0.000000" interpolation="0" />
 		<key row="98" value="0.000000" interpolation="0" />
 		<key row="328" value="2000.000000" interpolation="0" />
 	</track>
-	<track name="camera:destination.y" folded="0" muteKeyCount="0"
+	<track name="camera:endposition.y" folded="0" muteKeyCount="0"
 color="ff60b250">
 		<key row="0" value="0.000000" interpolation="0" />
 		<key row="98" value="0.000000" interpolation="0" />
 	</track>
-	<track name="camera:destination.z" folded="0" muteKeyCount="0"
+	<track name="camera:endposition.z" folded="0" muteKeyCount="0"
 color="ff4fb292">
 		<key row="0" value="1000.000000" interpolation="0" />
 		<key row="98" value="0.000000" interpolation="0" />
@@ -78,7 +78,7 @@ color="ffb28050">
 		<key row="0" value="10000.000000" interpolation="1" />
 		<key row="328" value="-1000.000000" interpolation="0" />
 	</track>
-	<track name="camera:speed" folded="0" muteKeyCount="0"
+	<track name="camera:time" folded="0" muteKeyCount="0"
 color="ffa9b250">
 		<key row="0" value="0.000000" interpolation="1" />
 		<key row="98" value="1.000000" interpolation="1" />
@@ -152,6 +152,28 @@ color="ffb25091">
 	<track name="fractal:limit" folded="0" muteKeyCount="0"
 color="ffb27474">
 		<key row="0" value="3.490000" interpolation="0" />
+	</track>
+	<track name="camera:cp1.x" folded="0" muteKeyCount="0"
+color="ffb25091">
+		<key row="0" value="100.000000" interpolation="0" />
+	</track>
+	<track name="camera:cp1.y" folded="0" muteKeyCount="0"
+color="ffb27474" />
+	<track name="camera:cp1.z" folded="0" muteKeyCount="0"
+color="ffb28050">
+		<key row="0" value="20.000000" interpolation="0" />
+	</track>
+	<track name="camera:cp2.x" folded="0" muteKeyCount="0"
+color="ffa9b250">
+		<key row="0" value="500.000000" interpolation="0" />
+	</track>
+	<track name="camera:cp2.y" folded="0" muteKeyCount="0"
+color="ff60b250">
+		<key row="0" value="1000.000000" interpolation="0" />
+	</track>
+	<track name="camera:cp2.z" folded="0" muteKeyCount="0"
+color="ff4fb292">
+		<key row="0" value="200.000000" interpolation="0" />
 	</track>
 </tracks>
 	</rootElement>
