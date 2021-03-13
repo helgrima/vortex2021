@@ -35,34 +35,54 @@ color="ff60b250">
 	<track name="camera:position.x" folded="0" muteKeyCount="0"
 color="ff4fb292">
 		<key row="0" value="0.000000" interpolation="0" />
+		<key row="98" value="0.000000" interpolation="0" />
 	</track>
 	<track name="camera:position.y" folded="0" muteKeyCount="0"
 color="ff4f71b2">
 		<key row="0" value="0.000000" interpolation="0" />
+		<key row="98" value="0.000000" interpolation="0" />
 	</track>
 	<track name="camera:position.z" folded="0" muteKeyCount="0"
 color="ff8850b2">
 		<key row="0" value="0.000000" interpolation="0" />
+		<key row="98" value="1000.000000" interpolation="0" />
+	</track>
+	<track name="camera:destination.x" folded="0" muteKeyCount="0"
+color="ffa9b250">
+		<key row="0" value="0.000000" interpolation="0" />
+		<key row="98" value="0.000000" interpolation="0" />
+		<key row="328" value="2000.000000" interpolation="0" />
+	</track>
+	<track name="camera:destination.y" folded="0" muteKeyCount="0"
+color="ff60b250">
+		<key row="0" value="0.000000" interpolation="0" />
+		<key row="98" value="0.000000" interpolation="0" />
+	</track>
+	<track name="camera:destination.z" folded="0" muteKeyCount="0"
+color="ff4fb292">
+		<key row="0" value="1000.000000" interpolation="0" />
+		<key row="98" value="0.000000" interpolation="0" />
+		<key row="328" value="-1000.000000" interpolation="0" />
 	</track>
 	<track name="camera:lookat.x" folded="0" muteKeyCount="0"
 color="ffb25091">
 		<key row="0" value="0.000000" interpolation="0" />
-		<key row="249" value="5000.000000" interpolation="0" />
 		<key row="328" value="2000.000000" interpolation="0" />
 	</track>
 	<track name="camera:lookat.y" folded="0" muteKeyCount="0"
 color="ffb27474">
-		<key row="0" value="0.000000" interpolation="0" />
+		<key row="0" value="0.000000" interpolation="1" />
 	</track>
 	<track name="camera:lookat.z" folded="0" muteKeyCount="0"
 color="ffb28050">
-		<key row="0" value="1000.000000" interpolation="0" />
-		<key row="248" value="1000.000000" interpolation="0" />
+		<key row="0" value="10000.000000" interpolation="1" />
 		<key row="328" value="-1000.000000" interpolation="0" />
 	</track>
 	<track name="camera:speed" folded="0" muteKeyCount="0"
 color="ffa9b250">
-		<key row="0" value="25.000000" interpolation="0" />
+		<key row="0" value="0.000000" interpolation="1" />
+		<key row="98" value="1.000000" interpolation="1" />
+		<key row="164" value="2.000000" interpolation="0" />
 		<key row="249" value="50.000000" interpolation="0" />
 	</track>
 	<track name="camera:fov" folded="0" muteKeyCount="0"
@@ -72,6 +92,18 @@ color="ffa9b250">
 	<track name="march:maxsteps" folded="0" muteKeyCount="0"
 color="ff60b250">
 		<key row="0" value="64.000000" interpolation="0" />
+	</track>
+	<track name="march:min_threshold" folded="0" muteKeyCount="0"
+color="ff4f71b2">
+		<key row="0" value="0.001000" interpolation="0" />
+	</track>
+	<track name="march:max_threshold" folded="0" muteKeyCount="0"
+color="ff8850b2">
+		<key row="0" value="0.010000" interpolation="0" />
+	</track>
+	<track name="march:max_threshold_distance" folded="0"
+muteKeyCount="0" color="ffb25091">
+		<key row="0" value="1000.000000" interpolation="0" />
 	</track>
 	<track name="march:maxdistance" folded="0" muteKeyCount="0"
 color="ff4f71b2">
@@ -120,34 +152,6 @@ color="ffb25091">
 	<track name="fractal:limit" folded="0" muteKeyCount="0"
 color="ffb27474">
 		<key row="0" value="3.490000" interpolation="0" />
-	</track>
-	<track name="camera:destination.x" folded="0" muteKeyCount="0"
-color="ffa9b250">
-		<key row="0" value="0.000000" interpolation="0" />
-		<key row="249" value="5000.000000" interpolation="0" />
-		<key row="328" value="2000.000000" interpolation="0" />
-	</track>
-	<track name="camera:destination.y" folded="0" muteKeyCount="0"
-color="ff60b250">
-		<key row="0" value="0.000000" interpolation="0" />
-	</track>
-	<track name="camera:destination.z" folded="0" muteKeyCount="0"
-color="ff4fb292">
-		<key row="0" value="1000.000000" interpolation="0" />
-		<key row="248" value="1000.000000" interpolation="0" />
-		<key row="328" value="-1000.000000" interpolation="0" />
-	</track>
-	<track name="march:min_threshold" folded="0" muteKeyCount="0"
-color="ff4f71b2">
-		<key row="0" value="0.001000" interpolation="0" />
-	</track>
-	<track name="march:max_threshold" folded="0" muteKeyCount="0"
-color="ff8850b2">
-		<key row="0" value="0.010000" interpolation="0" />
-	</track>
-	<track name="march:max_threshold_distance" folded="0"
-muteKeyCount="0" color="ffb25091">
-		<key row="0" value="1000.000000" interpolation="0" />
 	</track>
 </tracks>
 	</rootElement>

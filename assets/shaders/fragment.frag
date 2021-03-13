@@ -113,17 +113,18 @@ struct hit {
     entity entity;
 };
 
-//
-// Description : Array and textureless GLSL 2D/3D/4D simplex 
-//               noise functions.
-//      Author : Ian McEwan, Ashima Arts.
-//  Maintainer : stegu
-//     Lastmod : 20110822 (ijm)
-//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.
-//               Distributed under the MIT License. See LICENSE file.
-//               https://github.com/ashima/webgl-noise
-//               https://github.com/stegu/webgl-noise
-// 
+vec3 bezier(vec3 A, vec3 B, vec3 C, vec3 D, float t) {
+  vec3 E = mix(A, B, t);
+  vec3 F = mix(B, C, t);
+  vec3 G = mix(C, D, t);
+
+  vec3 H = mix(E, F, t);
+  vec3 I = mix(F, G, t);
+
+  vec3 P = mix(H, I, t);
+
+  return P;
+}
 
 float rand(vec2 co)
 {
@@ -1822,9 +1823,9 @@ float star(vec2 uv, float flare)
 
 vec3 starsBg(vec2 uv, vec3 eye, vec3 rayDirection)
 {
-    vec3 lookAtDir = (cameraLookAt - eye);
+    vec3 lookAtDir = normalize((cameraLookAt - eye));
     vec2 cameraOffset = vec2(lookAtDir.x, lookAtDir.y);
-    vec2 uv1 = (uv * 5.0);// - cameraOffset;
+    vec2 uv1 = (uv * 5.0) - cameraOffset;
     vec3 color = vec3(0.0);
     vec2 gv = fract(uv1) - 0.5;
     vec2 id = floor(uv1);
@@ -2026,7 +2027,13 @@ vec3 processColor(hit h, vec3 rd, vec3 eye, vec2 uv, vec3 lp)
 vec3 drawMarching(vec2 uv) {
     vec3 direction = normalize(cameraDestination - cameraPosition);
     vec3 currentCameraPosition = cameraPosition;
-    currentCameraPosition += cameraSpeed * time * direction;
+    //currentCameraPosition += cameraSpeed * time * direction;
+    vec3 P0 = vec3(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+    vec3 P1 = vec3(cameraPosition.x + 200, cameraPosition.y + 100, cameraPosition.z);
+    vec3 P2 = vec3(cameraDestination.x + 200, cameraDestination.y + 100, cameraDestination.z);
+    vec3 P3 = vec3(cameraDestination.x, cameraDestination.y, cameraDestination.z);
+    float bezierCurvePoint = fract(cameraSpeed);
+    currentCameraPosition = bezier(P0, P1, P2, P3, bezierCurvePoint);
 
     vec3 forward = normalize(cameraLookAt - currentCameraPosition);   
     vec3 right = normalize(vec3(forward.z, 0.0, -forward.x));
