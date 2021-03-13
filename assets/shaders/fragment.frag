@@ -1118,11 +1118,11 @@ entity mPyramids(vec3 point)
     );
     vec3 p1 = point;
     float fbm = fbm3D(
-        p1 * 5.0,
-        0.2,
+        p1 * 2.0,
+        0.5,
         2.0,
         3,
-        1.2
+        1.3
     );
     //float fbm3D(
     //    vec3 P,
@@ -1130,20 +1130,24 @@ entity mPyramids(vec3 point)
     //    float lacunarity,
     //    int octaves,
     //    float addition)
-    //p1 += fbm;
+    p1.xz *= fbm;
+
     float dist = 0.1;
     float height = 1.5;
     float scale = 1.0;
+
+    vec3 pyramid1Point = translate(p1, vec3(0.0, dist, 0.0));
     entity pyramid1 = mPyramid(
-        translate(p1, vec3(0.0, dist, 0.0)),
+        pyramid1Point,
         height,
         scale,
         mat
     );
     pyramid1.needNormals = true;
 
+    vec3 pyramid2Point = rotX(translate(p1, vec3(0.0, -dist, 0.0)), PI);
     entity pyramid2 = mPyramid(
-        rotX(translate(p1, vec3(0.0, -dist, 0.0)), PI),
+        pyramid2Point,
         height,
         scale,
         mat
@@ -1151,7 +1155,8 @@ entity mPyramids(vec3 point)
     pyramid2.needNormals = true;
 
     entity e = opUnion(pyramid1, pyramid2);
-    
+    e.needNormals = true;
+ 
     return e;
 }
 
@@ -1687,7 +1692,10 @@ entity scene(vec3 path, vec2 uv)
 
             terrain.dist *= 0.5;
             terrain.needNormals = true;
-
+            return terrain;
+        }
+        case 6:
+        {            
             entity pyramids = mPyramids(
                 rotY(rotZ(rotX(path, PI * -0.05), PI * 0.1), time2)
             );
