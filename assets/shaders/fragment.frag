@@ -1000,7 +1000,7 @@ entity mRealFractal(vec3 point, vec3 size, int iter, float scale, material mater
 		float r1 = dot(p, p);
         float r2 = dot(p, p - sin(p.x * 0.4)); //Alternate fractal
 		float r = r1;
-        float k = max((2.0 / r2), fractalLimit / 100.0);
+        float k = max((2.0 / r1), fractalLimit / 100.0);
 		p *= k;
 		scale *= k;
         p = rotX(p,  -0.1);

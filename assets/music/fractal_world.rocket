@@ -85,7 +85,7 @@ color="ff60b250">
 	</track>
 	<track name="march:min_threshold" folded="0" muteKeyCount="0"
 color="ff4f71b2">
-		<key row="0" value="0.000000" interpolation="0" />
+		<key row="0" value="0.001000" interpolation="0" />
 	</track>
 	<track name="march:max_threshold" folded="0" muteKeyCount="0"
 color="ff8850b2">
@@ -93,7 +93,7 @@ color="ff8850b2">
 	</track>
 	<track name="march:max_threshold_distance" folded="0"
 muteKeyCount="0" color="ffb25091">
-		<key row="0" value="700.000000" interpolation="0" />
+		<key row="0" value="50.000000" interpolation="0" />
 	</track>
 	<track name="march:maxdistance" folded="0" muteKeyCount="0"
 color="ff4f71b2">
@@ -129,19 +129,19 @@ color="ff4fb292">
 	</track>
 	<track name="fractal:parameters.x" folded="0" muteKeyCount="0"
 color="ff4f71b2">
-		<key row="0" value="1.070000" interpolation="0" />
+		<key row="0" value="0.820001" interpolation="0" />
 	</track>
 	<track name="fractal:parameters.y" folded="0" muteKeyCount="0"
 color="ff8850b2">
-		<key row="0" value="0.879999" interpolation="0" />
+		<key row="0" value="0.759999" interpolation="0" />
 	</track>
 	<track name="fractal:parameters.z" folded="0" muteKeyCount="0"
 color="ffb25091">
-		<key row="0" value="1.440001" interpolation="0" />
+		<key row="0" value="1.280000" interpolation="0" />
 	</track>
 	<track name="fractal:limit" folded="0" muteKeyCount="0"
 color="ffb27474">
-		<key row="0" value="3.490000" interpolation="0" />
+		<key row="0" value="2.080000" interpolation="0" />
 	</track>
 	<track name="camera:cp1.x" folded="0" muteKeyCount="0"
 color="ffb25091">
@@ -168,6 +168,18 @@ color="ff60b250">
 	<track name="camera:cp2.z" folded="0" muteKeyCount="0"
 color="ff4fb292">
 		<key row="53" value="-100.000000" interpolation="0" />
+	</track>
+	<track name="scene1.color.x" folded="0" muteKeyCount="0"
+color="ff4f71b2">
+		<key row="0" value="1.000000" interpolation="0" />
+	</track>
+	<track name="scene1.color.y" folded="0" muteKeyCount="0"
+color="ff8850b2">
+		<key row="0" value="1.000000" interpolation="0" />
+	</track>
+	<track name="scene1.color.z" folded="0" muteKeyCount="0"
+color="ffb25091">
+		<key row="0" value="1.000000" interpolation="0" />
 	</track>
 </tracks>
 	</rootElement>
