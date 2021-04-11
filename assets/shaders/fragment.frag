@@ -14,7 +14,11 @@ float time2 = time / 2;
 float time3 = time / 3;
 float time4 = time / 4;
 float time5 = time / 5;
+
 uniform vec2 resolution;
+uniform vec3 user;
+uniform vec3 position;
+uniform vec3 viewDir;
 
 uniform vec3 cameraStartPosition;
 uniform vec3 cameraLookAt;
@@ -2029,8 +2033,10 @@ vec3 processColor(hit h, vec3 rd, vec3 eye, vec2 uv, vec3 lp)
 vec3 drawMarching(vec2 uv) {
     float bezierCurvePoint = fract(cameraTime);
     vec3 currentCameraPosition = bezier(cameraStartPosition, cameraControlPosition1, cameraControlPosition2, cameraEndPosition, bezierCurvePoint);
-
-    vec3 forward = normalize(cameraLookAt - currentCameraPosition);   
+    vec3 currentCameraLookAt = viewDir;
+    currentCameraPosition = position;
+    vec3 forward = normalize(currentCameraLookAt - currentCameraPosition);   
+    forward = viewDir;
     vec3 right = normalize(vec3(forward.z, 0.0, -forward.x));
     vec3 up = normalize(cross(forward, right)); 
     
