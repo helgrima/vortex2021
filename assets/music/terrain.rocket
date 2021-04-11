@@ -8,7 +8,7 @@ color="ffb27474">
 	</track>
 	<track name="common:fade.x" folded="0" muteKeyCount="0"
 color="ffb28050">
-		<key row="0" value="1.000000" interpolation="1" />
+		<key row="0" value="1.000000" interpolation="0" />
 		<key row="32" value="1.000000" interpolation="0" />
 		<key row="33" value="0.000000" interpolation="0" />
 		<key row="34" value="0.500000" interpolation="0" />
@@ -17,7 +17,7 @@ color="ffb28050">
 	</track>
 	<track name="common:fade.y" folded="0" muteKeyCount="0"
 color="ffa9b250">
-		<key row="0" value="1.000000" interpolation="1" />
+		<key row="0" value="1.000000" interpolation="0" />
 		<key row="32" value="1.000000" interpolation="0" />
 		<key row="33" value="0.000000" interpolation="0" />
 		<key row="39" value="1.000000" interpolation="0" />
@@ -26,7 +26,7 @@ color="ffa9b250">
 	</track>
 	<track name="common:fade.z" folded="0" muteKeyCount="0"
 color="ff60b250">
-		<key row="0" value="1.000000" interpolation="1" />
+		<key row="0" value="1.000000" interpolation="0" />
 		<key row="32" value="1.000000" interpolation="0" />
 		<key row="33" value="0.000000" interpolation="0" />
 		<key row="34" value="1.000000" interpolation="0" />
@@ -97,11 +97,11 @@ color="ff4f71b2">
 	</track>
 	<track name="march:max_threshold" folded="0" muteKeyCount="0"
 color="ff8850b2">
-		<key row="0" value="0.010000" interpolation="0" />
+		<key row="0" value="1.000000" interpolation="0" />
 	</track>
 	<track name="march:max_threshold_distance" folded="0"
 muteKeyCount="0" color="ffb25091">
-		<key row="0" value="1000.000000" interpolation="0" />
+		<key row="0" value="500.000000" interpolation="0" />
 	</track>
 	<track name="march:maxdistance" folded="0" muteKeyCount="0"
 color="ff4f71b2">
@@ -113,11 +113,11 @@ color="ff8850b2">
 	</track>
 	<track name="light:position.y" folded="0" muteKeyCount="0"
 color="ffb25091">
-		<key row="0" value="100.000000" interpolation="0" />
+		<key row="0" value="32.090004" interpolation="0" />
 	</track>
 	<track name="light:position.z" folded="0" muteKeyCount="0"
 color="ffb27474">
-		<key row="0" value="50.000000" interpolation="0" />
+		<key row="0" value="0.000000" interpolation="0" />
 	</track>
 	<track name="fog:color.x" folded="0" muteKeyCount="0"
 color="ffb28050">
@@ -172,6 +172,38 @@ color="ff60b250">
 	<track name="camera:cp2.z" folded="0" muteKeyCount="0"
 color="ff4fb292">
 		<key row="0" value="200.000000" interpolation="0" />
+	</track>
+	<track name="scene1.color.x" folded="0" muteKeyCount="0"
+color="ff4f71b2">
+		<key row="0" value="1.000000" interpolation="0" />
+	</track>
+	<track name="scene1.color.y" folded="0" muteKeyCount="0"
+color="ff8850b2">
+		<key row="0" value="1.000000" interpolation="0" />
+	</track>
+	<track name="scene1.color.z" folded="0" muteKeyCount="0"
+color="ffb25091">
+		<key row="0" value="1.000000" interpolation="0" />
+	</track>
+	<track name="terrain:resolution" folded="0" muteKeyCount="0"
+color="ffb27474">
+		<key row="0" value="0.010000" interpolation="0" />
+	</track>
+	<track name="terrain:amplitude" folded="0" muteKeyCount="0"
+color="ffb28050">
+		<key row="0" value="80.000000" interpolation="0" />
+	</track>
+	<track name="terrain:gain" folded="0" muteKeyCount="0"
+color="ffa9b250">
+		<key row="0" value="0.350000" interpolation="0" />
+	</track>
+	<track name="terrain:lacunarity" folded="0" muteKeyCount="0"
+color="ff60b250">
+		<key row="0" value="2.000000" interpolation="0" />
+	</track>
+	<track name="terrain:octaves" folded="0" muteKeyCount="0"
+color="ff4fb292">
+		<key row="0" value="5.000000" interpolation="0" />
 	</track>
 </tracks>
 	</rootElement>

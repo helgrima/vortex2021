@@ -42,6 +42,12 @@ uniform float fogIntensity;
 uniform vec3 fractalParameters;
 uniform float fractalLimit;
 
+uniform float terrainResolution;
+uniform float terrainAmplitude;
+uniform float terrainGain;
+uniform float terrainLacunarity;
+uniform float terrainOctaves;
+
 struct vec2Tuple {
     vec2 first;
     vec2 second;
@@ -1034,13 +1040,13 @@ entity mTerrain(vec3 point)
             1.0
         ),
         diffuseOptions(
-            vec3(1.0, 0.0, 0.0),
-            1.0
+            vec3(1.0, 1.0, 0.0),
+            0.5
         ),
         specularOptions(
             vec3(1.0, 1.0, 1.0),
-            0.0,
-            0.0
+            10.0,
+            20.0
         ),
         shadowOptions(
             false,
@@ -1065,20 +1071,12 @@ entity mTerrain(vec3 point)
     vec3 p1 = point;
 
     float fbm = fbm2D(
-        p1.xz * 0.01,
-        80.0,
-        0.35,
-        2.5,
-        5
+        p1.xz * terrainResolution,
+        terrainAmplitude,
+        terrainGain,
+        terrainLacunarity,
+        int(terrainOctaves)
     );
-
-    //float fbm2D (
-    //    in vec2 st,
-    //    float amplitude,
-    //    float gain,
-    //    float lacunarity,
-    //    int octaves
-    //    )
 
     p1.y += fbm * 1.0;
     //float fbm3D(vec3 P, float frequency, float lacunarity, int octaves, float addition)
@@ -1699,7 +1697,8 @@ entity scene(vec3 path, vec2 uv)
 
             terrain.dist *= 0.5;
             terrain.needNormals = true;
-            return terrain;
+            entity debug = mDebug(path, cameraEndPosition, cameraLookAt, lightPosition, 2.0);
+            return opUnion(terrain, debug);
         }
         case 6:
         {            

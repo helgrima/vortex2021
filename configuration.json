@@ -121,6 +121,31 @@
             "dataType": "float1",
             "variable": "fractalLimit",
             "track": "fractal:limit"
+        },
+        {
+            "dataType": "float1",
+            "variable": "terrainResolution",
+            "track": "terrain:resolution"
+        },
+        {
+            "dataType": "float1",
+            "variable": "terrainAmplitude",
+            "track": "terrain:amplitude"
+        },
+        {
+            "dataType": "float1",
+            "variable": "terrainGain",
+            "track": "terrain:gain"
+        },
+        {
+            "dataType": "float1",
+            "variable": "terrainLacunarity",
+            "track": "terrain:lacunarity"
+        },
+        {
+            "dataType": "float1",
+            "variable": "terrainOctaves",
+            "track": "terrain:octaves"
         }
     ]
 }
